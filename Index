@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>АНПОО «Экономико-правовой техникум» | Портал</title>
+    <meta name="description" content="Цифровая образовательная среда техникума">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a8a',   // Академический синий
+                        secondary: '#f59e0b', // Акцентный желтый
+                        accent: '#10b981',    // Зеленый для успехов
+                        light: '#f3f4f6',
+                        dark: '#1f2937'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Иконки -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .section-hidden { display: none; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Доступность (WCAG 2.1) */
+        .focus-visible:focus { outline: 3px solid #f59e0b; outline-offset: 2px; }
+        
+        /* Стили для таблицы расписания */
+        .schedule-row:hover { background-color: #f9fafb; }
+        
+        /* Уведомления */
+        .toast {
+            position: fixed; bottom: 20px; right: 20px;
+            padding: 1rem; border-radius: 8px;
+            color: white; font-weight: bold;
+            transform: translateY(100px); opacity: 0;
+            transition: all 0.3s ease; z-index: 100;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast-success { background-color: #10b981; }
+        .toast-error { background-color: #ef4444; }
+        .toast-info { background-color: #3b82f6; }
+    </style>
+</head>
+<body class="bg-light text-gray-800 font-sans antialiased flex flex-col min-h-screen">
+
+    <!-- Шапка -->
+    <header class="bg-primary text-white shadow-lg sticky top-0 z-40">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <!-- Логотип и название -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="showSection('home')">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-primary font-bold text-xl shadow">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg md:text-xl font-bold leading-tight">Экономико-правовой техникум</h1>
+                        <p class="text-xs text-gray-300 hidden md:block">Цифровая образовательная среда</p>
+                    </div>
+                </div>
+                
+                <!-- Навигация -->
+                <nav class="hidden lg:flex space-x-6 items-center">
+                    <button onclick="showSection('home')" class="hover:text-secondary transition focus-visible:focus px-3 py-2">Главная</button>
+                    <button onclick="showSection('specialties')" class="hover:text-secondary transition focus-visible:focus px-3 py-2">Специальности</button>
+                    <button onclick="showSection('schedule')" class="hover:text-secondary transition focus-visible:focus px-3 py-2">Расписание</button>
+                    <button onclick="showSection('admission')" class="hover:text-secondary transition focus-visible:focus px-3 py-2">Абитуриенту</button>
+                </nav>
+
+                <!-- Кнопка входа / Профиль -->
+                <div id="auth-section">
+                    <button onclick="toggleLoginModal()" class="bg-secondary text-primary font-bold px-5 py-2 rounded hover:bg-yellow-400 transition focus-visible:focus shadow-md">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Войти
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Мобильное меню -->
+            <div class="lg:hidden flex space-x-4 mt-3 pb-2 overflow-x-auto">
+                <button onclick="showSection('home')" class="text-sm whitespace-nowrap bg-white/10 px-3 py-1 rounded">Главная</button>
+                <button onclick="showSection('schedule')" class="text-sm whitespace-nowrap bg-white/10 px-3 py-1 rounded">Расписание</button>
+                <button onclick="showSection('admission')" class="text-sm whitespace-nowrap bg-white/10 px-3 py-1 rounded">Приемная</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Основной контент -->
+    <main class="container mx-auto px-4 py-8 flex-grow">
+
+        <!-- СЕКЦИЯ: ГЛАВНАЯ -->
+        <section id="home" class="section-hidden fade-in">
+            <!-- Приветственный баннер -->
+            <div class="bg-gradient-to-r from-primary to-blue-700 rounded-xl shadow-xl p-8 mb-8 text-white relative overflow-hidden">
+                <div class="relative z-10">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4">Добро пожаловать в цифровую среду техникума</h2>
+                    <p class="text-lg mb-6 max-w-2xl">
+                        Единый портал для студентов, преподавателей и абитуриентов. 
+                        Доступ к расписанию, учебным материалам и электронным сервисам 24/7.
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="showSection('schedule')" class="bg-secondary text-primary font-bold px-6 py-3 rounded hover:bg-yellow-400 transition shadow-lg">
+                            <i class="fas fa-calendar-alt mr-2"></i>Расписание
+                        </button>
+                        <button onclick="showSection('admission')" class="bg-white/20 backdrop-blur border border-white px-6 py-3 rounded hover:bg-white/30 transition">
+                            <i class="fas fa-user-graduate mr-2"></i>Подать документы
+                        </button>
+                    </div>
+                </div>
+                <i class="fas fa-book-open absolute -right-10 -bottom-10 text-9xl text-white/10"></i>
+            </div>
+
+            <!-- Карточки быстрого доступа -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer" onclick="showSection('schedule')">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-primary mb-4">
+                        <i class="fas fa-calendar-week text-xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Расписание</h3>
+                    <p class="text-sm text-gray-600">Актуальное расписание занятий и экзаменов</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer" onclick="toggleLoginModal()">
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-700 mb-4">
+                        <i class="fas fa-laptop-code text-xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">LMS Moodle</h3>
+                    <p class="text-sm text-gray-600">Электронное обучение и материалы курсов</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer" onclick="showSection('admission')">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-700 mb-4">
+                        <i class="fas fa-file-signature text-xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Приемная комиссия</h3>
+                    <p class="text-sm text-gray-600">Электронная подача документов онлайн</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-700 mb-4">
+                        <i class="fas fa-newspaper text-xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Новости</h3>
+                    <p class="text-sm text-gray-600">События и объявления техникума</p>
+                </div>
+            </div>
+
+            <!-- Новости -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold text-primary">Последние новости</h3>
+                    <button class="text-secondary hover:underline text-sm">Все новости</button>
+                </div>
+                <div id="news-container" class="space-y-4"></div>
+            </div>
+        </section>
+
+        <!-- СЕКЦИЯ: СПЕЦИАЛЬНОСТИ -->
+        <section id="specialties" class="section-hidden fade-in">
+            <h2 class="text-3xl font-bold text-primary mb-6">Направления подготовки</h2>
+            <p class="text-gray-600 mb-8">Техникум осуществляет подготовку квалифицированных специалистов по следующим направлениям:</p>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Карточки специальностей из дипломной работы -->
+                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-primary hover:shadow-lg transition">
+                    <div class="flex items-center mb-3">
+                        <i class="fas fa-store text-primary text-2xl mr-3"></i>
+                        <h3 class="font-bold text-lg">Торговое дело</h3>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Подготовка специалистов для современной розничной и оптовой торговли, управление продажами.</p>
+                    <span class="text-xs bg-blue-100 text-primary px-2 py-1 rounded">СПО</span>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-secondary hover:shadow-lg transition">
+                    <div class="flex items-center mb-3">
+                        <i class="fas fa-calculator text-secondary text-2xl mr-3"></i>
+                        <h3 class="font-bold text-lg">Экономика и бух. учет</h3>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Финансовый анализ, бухгалтерия, аудит и налогообложение.</p>
+                    <span class="text-xs bg-blue-100 text-primary px-2 py-1 rounded">СПО</span>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-green-600 hover:shadow-lg transition">
+                    <div class="flex items-center mb-3">
+                        <i class="fas fa-truck text-green-600 text-2xl mr-3"></i>
+                        <h3 class="font-bold text-lg">Логистика</h3>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Операционная деятельность в логистике и управление цепями поставок.</p>
+                    <span class="text-xs bg-blue-100 text-primary px-2 py-1 rounded">СПО</span>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-purple-600 hover:shadow-lg transition">
+                    <div class="flex items-center mb-3">
+                        <i class="fas fa-university text-purple-600 text-2xl mr-3"></i>
+                        <h3 class="font-bold text-lg">Банковское дело</h3>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Работа в кредитных организациях и финансовых учреждениях.</p>
+                    <span class="text-xs bg-blue-100 text-primary px-2 py-1 rounded">СПО</span>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-red-600 hover:shadow-lg transition">
+                    <div class="flex items-center mb-3">
+                        <i class="fas fa-shield-alt text-red-600 text-2xl mr-3"></i>
+                        <h3 class="font-bold text-lg">Правоохранительная деятельность</h3>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Подготовка кадров для органов правопорядка и безопасности.</p>
+                    <span class="text-xs bg-blue-100 text-primary px-2 py-1 rounded">СПО</span>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-cyan-600 hover:shadow-lg transition">
+                    <div class="flex items-center mb-3">
+                        <i class="fas fa-code text-cyan-600 text-2xl mr-3"></i>
+                        <h3 class="font-bold text-lg">Информационные системы</h3>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Программирование и администрирование информационных систем.</p>
+                    <span class="text-xs bg-blue-100 text-primary px-2 py-1 rounded">СПО</span>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-indigo-600 hover:shadow-lg transition">
+                    <div class="flex items-center mb-3">
+                        <i class="fas fa-balance-scale text-indigo-600 text-2xl mr-3"></i>
+                        <h3 class="font-bold text-lg">Юриспруденция</h3>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Правовое обеспечение национальной безопасности и гражданско-правовые отношения.</p>
+                    <span class="text-xs bg-blue-100 text-primary px-2 py-1 rounded">СПО</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЕКЦИЯ: РАСПИСАНИЕ (Улучшенное) -->
+        <section id="schedule" class="section-hidden fade-in">
+            <h2 class="text-3xl font-bold text-primary mb-6">
+                <i class="fas fa-calendar-alt mr-3"></i>Расписание занятий
+            </h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <!-- Фильтры расписания -->
+                <div class="grid md:grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-bold mb-2 text-gray-700">1. Выберите специальность</label>
+                        <select id="spec-select" onchange="updateGroups()" class="w-full border-2 border-gray-200 p-3 rounded focus:border-primary focus-visible:focus transition">
+                            <option value="">-- Выберите специальность --</option>
+                            <option value="trade">Торговое дело</option>
+                            <option value="economy">Экономика и бухгалтерский учет</option>
+                            <option value="logistics">Логистика</option>
+                            <option value="banking">Банковское дело</option>
+                            <option value="law_enforcement">Правоохранительная деятельность</option>
+                            <option value="it">Информационные системы</option>
+                            <option value="law">Юриспруденция</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-2 text-gray-700">2. Выберите группу</label>
+                        <select id="group-select" onchange="renderSchedule()" class="w-full border-2 border-gray-200 p-3 rounded focus:border-primary focus-visible:focus transition" disabled>
+                            <option value="">-- Сначала выберите специальность --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-2 text-gray-700">3. Выберите дату</label>
+                        <input type="date" id="date-select" onchange="renderSchedule()" class="w-full border-2 border-gray-200 p-3 rounded focus:border-primary focus-visible:focus transition">
+                    </div>
+                </div>
+
+                <!-- Таблица расписания -->
+                <div id="schedule-container" class="hidden">
+                    <div class="flex justify-between items-center mb-4 bg-blue-50 p-4 rounded">
+                        <h3 class="font-bold text-lg text-primary" id="schedule-title">Расписание</h3>
+                        <button onclick="downloadSchedule()" class="text-secondary hover:text-yellow-600 font-bold">
+                            <i class="fas fa-download mr-2"></i>Скачать PDF
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-primary text-white">
+                                <tr>
+                                    <th class="p-4 text-left">№</th>
+                                    <th class="p-4 text-left">Время</th>
+                                    <th class="p-4 text-left">Предмет</th>
+                                    <th class="p-4 text-left">Преподаватель</th>
+                                    <th class="p-4 text-left">Кабинет</th>
+                                    <th class="p-4 text-left">Тип</th>
+                                </tr>
+                            </thead>
+                            <tbody id="schedule-body" class="divide-y divide-gray-200">
+                                <!-- Данные через JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-4 italic">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Данные синхронизируются с LMS Moodle. Актуальность на текущую неделю.
+                    </p>
+                </div>
+
+                <!-- Заглушка, если ничего не выбрано -->
+                <div id="schedule-empty" class="text-center py-12 text-gray-400">
+                    <i class="fas fa-calendar-times text-6xl mb-4"></i>
+                    <p>Выберите специальность и группу для просмотра расписания</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЕКЦИЯ: ПРИЕМНАЯ КОМИССИЯ -->
+        <section id="admission" class="section-hidden fade-in">
+            <h2 class="text-3xl font-bold text-primary mb-6">
+                <i class="fas fa-user-graduate mr-3"></i>Электронная приемная комиссия
+            </h2>
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Форма подачи -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4 text-primary border-b pb-2">Подать документы онлайн</h3>
+                    <form id="admission-form" onsubmit="handleAdmission(event)">
+                        <div class="grid md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-bold mb-2">Фамилия *</label>
+                                <input type="text" required class="w-full border p-2 rounded focus:border-primary focus-visible:focus" placeholder="Иванов">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-2">Имя *</label>
+                                <input type="text" required class="w-full border p-2 rounded focus:border-primary focus-visible:focus" placeholder="Иван">
+                            </div>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-bold mb-2">Отчество</label>
+                                <input type="text" class="w-full border p-2 rounded focus:border-primary focus-visible:focus" placeholder="Иванович">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-2">Дата рождения *</label>
+                                <input type="date" required class="w-full border p-2 rounded focus:border-primary focus-visible:focus">
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold mb-2">Специальность *</label>
+                            <select required class="w-full border p-2 rounded focus:border-primary focus-visible:focus">
+                                <option value="">-- Выберите направление --</option>
+                                <option>Торговое дело</option>
+                                <option>Экономика и бухгалтерский учет</option>
+                                <option>Информационные системы и программирование</option>
+                                <option>Юриспруденция</option>
+                                <option>Банковское дело</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold mb-2">Форма обучения</label>
+                            <div class="flex space-x-4">
+                                <label class="flex items-center">
+                                    <input type="radio" name="form" value="full" checked class="mr-2"> Очная
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="form" value="part" class="mr-2"> Заочная
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-sm font-bold mb-2">Загрузка документов (PDF/A) *</label>
+                            <div class="border-2 border-dashed border-gray-300 rounded p-6 text-center hover:bg-gray-50 transition">
+                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                                <p class="text-sm text-gray-600">Перетащите файлы или нажмите для выбора</p>
+                                <p class="text-xs text-gray-400 mt-1">Паспорт, аттестат, СНИЛС (макс. 10 МБ)</p>
+                                <input type="file" multiple accept=".pdf" class="hidden" id="file-input">
+                                <button type="button" onclick="document.getElementById('file-input').click()" class="mt-2 text-secondary font-bold hover:underline">Выбрать файлы</button>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="flex items-start">
+                                <input type="checkbox" required class="mt-1 mr-2">
+                                <span class="text-sm text-gray-600">Согласен на обработку персональных данных в соответствии с ФЗ-152</span>
+                            </label>
+                        </div>
+                        <button type="submit" class="bg-primary text-white px-8 py-3 rounded font-bold hover:bg-blue-800 transition w-full">
+                            <i class="fas fa-paper-plane mr-2"></i>Отправить заявку
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Информация -->
+                <div class="bg-gradient-to-b from-blue-50 to-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4 text-primary">Информация для поступающих</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center mr-3 flex-shrink-0">1</div>
+                            <div>
+                                <h4 class="font-bold text-sm">Прием документов</h4>
+                                <p class="text-xs text-gray-600">с 20 июня по 15 августа 2024</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center mr-3 flex-shrink-0">2</div>
+                            <div>
+                                <h4 class="font-bold text-sm">Бюджетные места</h4>
+                                <p class="text-xs text-gray-600">Согласно контрольным цифрам приема</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center mr-3 flex-shrink-0">3</div>
+                            <div>
+                                <h4 class="font-bold text-sm">Отслеживание статуса</h4>
+                                <p class="text-xs text-gray-600">В личном кабинете абитуриента</p>
+                            </div>
+                        </div>
+                        <div class="border-t pt-4 mt-4">
+                            <h4 class="font-bold text-sm mb-2">Контакты приемной комиссии</h4>
+                            <p class="text-xs text-gray-600 mb-1"><i class="fas fa-phone mr-2"></i>+7 (XXX) XXX-XX-XX</p>
+                            <p class="text-xs text-gray-600 mb-1"><i class="fas fa-envelope mr-2"></i>pk@technikum.ru</p>
+                            <p class="text-xs text-gray-600"><i class="fas fa-clock mr-2"></i>Пн-Пт: 9:00 - 17:00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЕКЦИЯ: ЛИЧНЫЙ КАБИНЕТ (Новая) -->
+        <section id="cabinet" class="section-hidden fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-primary">
+                    <i class="fas fa-user-circle mr-3"></i>Личный кабинет
+                </h2>
+                <button onclick="logout()" class="text-red-600 hover:text-red-800 font-bold">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Выйти
+                </button>
+            </div>
+
+            <div class="grid lg:grid-cols-4 gap-6">
+                <!-- Боковое меню -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="text-center mb-6">
+                            <div class="w-24 h-24 bg-primary text-white rounded-full flex items-center justify-center text-3xl mx-auto mb-3">
+                                <i class="fas fa-user" id="user-avatar-icon"></i>
+                            </div>
+                            <h3 class="font-bold text-lg" id="user-name">Пользователь</h3>
+                            <p class="text-sm text-gray-500" id="user-role">Роль</p>
+                            <p class="text-xs text-gray-400 mt-1" id="user-group"></p>
+                        </div>
+                        <nav class="space-y-2">
+                            <button onclick="showCabinetTab('dashboard')" class="w-full text-left px-4 py-2 rounded hover:bg-blue-50 text-primary font-bold cabinet-tab-btn active" data-tab="dashboard">
+                                <i class="fas fa-home mr-2"></i>Обзор
+                            </button>
+                            <button onclick="showCabinetTab('schedule')" class="w-full text-left px-4 py-2 rounded hover:bg-blue-50 text-gray-700 cabinet-tab-btn" data-tab="schedule">
+                                <i class="fas fa-calendar-alt mr-2"></i>Моё расписание
+                            </button>
+                            <button onclick="showCabinetTab('grades')" class="w-full text-left px-4 py-2 rounded hover:bg-blue-50 text-gray-700 cabinet-tab-btn" data-tab="grades">
+                                <i class="fas fa-clipboard-list mr-2"></i>Успеваемость
+                            </button>
+                            <button onclick="showCabinetTab('messages')" class="w-full text-left px-4 py-2 rounded hover:bg-blue-50 text-gray-700 cabinet-tab-btn" data-tab="messages">
+                                <i class="fas fa-envelope mr-2"></i>Сообщения
+                                <span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full ml-2">3</span>
+                            </button>
+                            <button onclick="showCabinetTab('settings')" class="w-full text-left px-4 py-2 rounded hover:bg-blue-50 text-gray-700 cabinet-tab-btn" data-tab="settings">
+                                <i class="fas fa-cog mr-2"></i>Настройки
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Контент кабинета -->
+                <div class="lg:col-span-3">
+                    <!-- Вкладка: Обзор -->
+                    <div id="tab-dashboard" class="cabinet-tab bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-xl font-bold mb-4 text-primary">Добро пожаловать!</h3>
+                        <div class="grid md:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-600">Ближайшая пара</p>
+                                <p class="font-bold text-primary">10:15 - Экономика</p>
+                                <p class="text-xs text-gray-500">Ауд. 305</p>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-600">Средний балл</p>
+                                <p class="font-bold text-green-600">4.5</p>
+                                <p class="text-xs text-gray-500">За семестр</p>
+                            </div>
+                            <div class="bg-yellow-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-600">Задания</p>
+                                <p class="font-bold text-yellow-600">2 к сдаче</p>
+                                <p class="text-xs text-gray-500">До конца недели</p>
+                            </div>
+                        </div>
+                        <div class="border-t pt-4">
+                            <h4 class="font-bold mb-3">Последние уведомления</h4>
+                            <div class="space-y-3" id="cabinet-notifications"></div>
+                        </div>
+                    </div>
+
+                    <!-- Вкладка: Расписание -->
+                    <div id="tab-schedule" class="cabinet-tab hidden bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-xl font-bold mb-4 text-primary">Моё расписание</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="p-3 text-left">Время</th>
+                                        <th class="p-3 text-left">Предмет</th>
+                                        <th class="p-3 text-left">Преподаватель</th>
+                                        <th class="p-3 text-left">Кабинет</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cabinet-schedule-body" class="divide-y"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Вкладка: Успеваемость -->
+                    <div id="tab-grades" class="cabinet-tab hidden bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-xl font-bold mb-4 text-primary">Успеваемость</h3>
+                        <div class="space-y-4">
+                            <div class="border rounded p-4">
+                                <div class="flex justify-between mb-2">
+                                    <span class="font-bold">Информационные системы</span>
+                                    <span class="text-green-600 font-bold">5 (Отлично)</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
+                                </div>
+                            </div>
+                            <div class="border rounded p-4">
+                                <div class="flex justify-between mb-2">
+                                    <span class="font-bold">Экономика организации</span>
+                                    <span class="text-blue-600 font-bold">4 (Хорошо)</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-blue-500 h-2 rounded-full" style="width: 80%"></div>
+                                </div>
+                            </div>
+                            <div class="border rounded p-4">
+                                <div class="flex justify-between mb-2">
+                                    <span class="font-bold">Право</span>
+                                    <span class="text-green-600 font-bold">5 (Отлично)</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-500 h-2 rounded-full" style="width: 95%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Вкладка: Сообщения -->
+                    <div id="tab-messages" class="cabinet-tab hidden bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-xl font-bold mb-4 text-primary">Сообщения</h3>
+                        <div class="space-y-3">
+                            <div class="border-l-4 border-primary bg-blue-50 p-4 rounded">
+                                <div class="flex justify-between mb-1">
+                                    <span class="font-bold">Деканат</span>
+                                    <span class="text-xs text-gray-500">Сегодня, 10:30</span>
+                                </div>
+                                <p class="text-sm">Напоминаем о сдаче курсовой работы до 25 мая</p>
+                            </div>
+                            <div class="border-l-4 border-secondary bg-yellow-50 p-4 rounded">
+                                <div class="flex justify-between mb-1">
+                                    <span class="font-bold">Преподаватель Петров А.А.</span>
+                                    <span class="text-xs text-gray-500">Вчера, 15:20</span>
+                                </div>
+                                <p class="text-sm">Изменение времени консультации по предмету "Базы данных"</p>
+                            </div>
+                            <div class="border-l-4 border-green-500 bg-green-50 p-4 rounded">
+                                <div class="flex justify-between mb-1">
+                                    <span class="font-bold">Библиотека</span>
+                                    <span class="text-xs text-gray-500">20.05.2026</span>
+                                </div>
+                                <p class="text-sm">Ваши книги готовы к выдаче</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Вкладка: Настройки -->
+                    <div id="tab-settings" class="cabinet-tab hidden bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-xl font-bold mb-4 text-primary">Настройки профиля</h3>
+                        <form onsubmit="event.preventDefault(); showToast('Настройки сохранены', 'success')">
+                            <div class="mb-4">
+                                <label class="block text-sm font-bold mb-2">Email для уведомлений</label>
+                                <input type="email" value="student@technikum.ru" class="w-full border p-2 rounded focus:border-primary">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-bold mb-2">Новый пароль</label>
+                                <input type="password" class="w-full border p-2 rounded focus:border-primary" placeholder="Оставьте пустым, чтобы не менять">
+                            </div>
+                            <div class="mb-4">
+                                <label class="flex items-center">
+                                    <input type="checkbox" checked class="mr-2">
+                                    <span class="text-sm">Получать уведомления на email</span>
+                                </label>
+                            </div>
+                            <button type="submit" class="bg-primary text-white px-6 py-2 rounded hover:bg-blue-800 transition">
+                                Сохранить изменения
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Подвал -->
+    <footer class="bg-dark text-white py-8 mt-auto">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-3 gap-8 mb-6">
+                <div>
+                    <h4 class="font-bold text-lg mb-3">Контакты</h4>
+                    <p class="text-sm text-gray-400">г. Тольятти,бул. Космонавтов, 17, 15-й квартал</p>
+                    <p class="text-sm text-gray-400">+7 (XXX) XXX-XX-XX</p>
+                    <p class="text-sm text-gray-400">info@technikum.ru</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-3">Разделы</h4>
+                    <ul class="text-sm text-gray-400 space-y-1">
+                        <li><button onclick="showSection('specialties')" class="hover:text-white">Специальности</button></li>
+                        <li><button onclick="showSection('schedule')" class="hover:text-white">Расписание</button></li>
+                        <li><button onclick="showSection('admission')" class="hover:text-white">Приемная комиссия</button></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-3">Информация</h4>
+                    <p class="text-xs text-gray-500">© 2026 АНПОО «Экономико-правовой техникум»</p>
+                    <p class="text-xs text-gray-500">Разработано в рамках дипломной работы</p>
+                    <p class="text-xs text-gray-500">Студент гр. П-422 Федоров Д.В.</p>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 pt-4 text-center text-xs text-gray-500">
+                Соответствует стандартам WCAG 2.1 и ГОСТ Р 57582-2017
+            </div>
+        </div>
+    </footer>
+
+    <!-- Модальное окно входа -->
+    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 w-full max-w-md relative shadow-2xl">
+            <button onclick="toggleLoginModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center text-2xl mx-auto mb-3">
+                    <i class="fas fa-user-lock"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-primary">Вход в систему</h2>
+                <p class="text-sm text-gray-500">Единая система аутентификации</p>
+            </div>
+
+            <form onsubmit="handleLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-2 text-gray-700">Логин / Email</label>
+                    <div class="relative">
+                        <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
+                        <input type="text" id="login-username" class="w-full border-2 border-gray-200 pl-10 p-2 rounded focus:border-primary focus-visible:focus transition" required placeholder="student, teacher, applicant">
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-bold mb-2 text-gray-700">Пароль</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
+                        <input type="password" id="login-password" class="w-full border-2 border-gray-200 pl-10 p-2 rounded focus:border-primary focus-visible:focus transition" required placeholder="123">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <p class="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+                        <strong>Демо-доступ:</strong><br>
+                        Студент: <code>student</code> / <code>123</code><br>
+                        Преподаватель: <code>teacher</code> / <code>123</code><br>
+                        Абитуриент: <code>applicant</code> / <code>123</code>
+                    </p>
+                </div>
+
+                <button type="submit" class="bg-primary text-white w-full py-3 rounded font-bold hover:bg-blue-800 transition shadow-lg">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Войти
+                </button>
+                
+                <div class="mt-4 text-center">
+                    <button type="button" class="text-sm text-secondary hover:underline">Забыли пароль?</button>
+                </div>
+                <p class="text-xs text-center mt-4 text-gray-400">Используется JWT авторизация (демо)</p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Уведомления -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Скрипты -->
+    <script>
+        // ================= ДАННЫЕ =================
+        const specialties = {
+            trade: ['Т-422', 'Т-423', 'Т-310'],
+            economy: ['Э-410', 'Э-411', 'Э-305'],
+            logistics: ['Л-401', 'Л-402'],
+            banking: ['Б-320', 'Б-321'],
+            law_enforcement: ['ПД-405', 'ПД-406'],
+            it: ['П-422', 'П-423', 'П-315'],
+            law: ['Ю-205', 'Ю-206', 'Ю-301']
+        };
+
+        const scheduleData = {
+            'П-422': [
+                { time: '08:30 - 10:00', subject: 'Информационные системы', teacher: 'Петров А.А.', room: '305', type: 'Лекция' },
+                { time: '10:15 - 11:45', subject: 'Экономика организации', teacher: 'Сидорова В.К.', room: '201', type: 'Практика' },
+                { time: '12:00 - 13:30', subject: 'Право', teacher: 'Иванов И.И.', room: '404', type: 'Семинар' },
+                { time: '13:45 - 15:15', subject: 'Базы данных', teacher: 'Козлов П.С.', room: '305', type: 'Лабораторная' }
+            ],
+            'Т-422': [
+                { time: '09:00 - 10:30', subject: 'Основы торговли', teacher: 'Смирнова Е.В.', room: '101', type: 'Лекция' },
+                { time: '10:45 - 12:15', subject: 'Маркетинг', teacher: 'Волков Д.Д.', room: '202', type: 'Практика' },
+                { time: '12:30 - 14:00', subject: 'Товароведение', teacher: 'Новикова А.А.', room: '105', type: 'Лабораторная' }
+            ],
+            'Э-410': [
+                { time: '08:30 - 10:00', subject: 'Бухгалтерский учет', teacher: 'Федорова М.И.', room: '310', type: 'Практика' },
+                { time: '10:15 - 11:45', subject: 'Финансы', teacher: 'Орлов С.С.', room: '312', type: 'Лекция' },
+                { time: '12:00 - 13:30', subject: 'Налоги', teacher: 'Петрова О.В.', room: '310', type: 'Семинар' }
+            ]
+        };
+
+        const newsData = [
+            { date: '20.05.2024', title: 'Объявлен набор на 2024/2025 учебный год', text: 'Приемная комиссия начинает работу. Подавайте документы онлайн!', icon: 'fa-bullhorn', color: 'text-blue-600' },
+            { date: '15.05.2024', title: 'Победа студентов в олимпиаде по праву', text: 'Наши студенты заняли призовые места в региональной олимпиаде.', icon: 'fa-trophy', color: 'text-yellow-600' },
+            { date: '10.05.2024', title: 'Обновление расписания экзаменов', text: 'Внимание! Изменения в графике экзаменационной сессии.', icon: 'fa-calendar-check', color: 'text-red-600' },
+            { date: '05.05.2024', title: 'День открытых дверей', text: 'Приглашаем абитуриентов и родителей на день открытых дверей.', icon: 'fa-door-open', color: 'text-green-600' }
+        ];
+
+        const notifications = [
+            { time: '10 мин назад', text: 'Новое задание по предмету "Базы данных"', type: 'info' },
+            { time: '1 час назад', text: 'Оценка за контрольную работу выставлена', type: 'success' },
+            { time: 'Вчера', text: 'Изменение в расписании на пятницу', type: 'warning' }
+        ];
+
+        // Состояние авторизации
+        let currentUser = null;
+
+        // ================= ИНИЦИАЛИЗАЦИЯ =================
+        document.addEventListener('DOMContentLoaded', () => {
+            showSection('home');
+            renderNews();
+            
+            // Установка текущей даты
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date-select').value = today;
+        });
+
+        // ================= НАВИГАЦИЯ =================
+        function showSection(sectionId) {
+            document.querySelectorAll('main > section').forEach(sec => {
+                sec.classList.add('section-hidden');
+            });
+            document.getElementById(sectionId).classList.remove('section-hidden');
+            window.scrollTo(0, 0);
+        }
+
+        function showCabinetTab(tabId) {
+            document.querySelectorAll('.cabinet-tab').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            
+            document.querySelectorAll('.cabinet-tab-btn').forEach(btn => {
+                btn.classList.remove('text-primary', 'font-bold', 'bg-blue-50');
+                btn.classList.add('text-gray-700');
+            });
+            document.querySelector(`[data-tab="${tabId}"]`).classList.add('text-primary', 'font-bold', 'bg-blue-50');
+            document.querySelector(`[data-tab="${tabId}"]`).classList.remove('text-gray-700');
+        }
+
+        // ================= НОВОСТИ =================
+        function renderNews() {
+            const container = document.getElementById('news-container');
+            container.innerHTML = newsData.map(news => `
+                <div class="flex items-start space-x-4 border-b pb-4 last:border-0 hover:bg-gray-50 p-2 rounded transition">
+                    <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas ${news.icon} ${news.color}"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="font-bold text-gray-800">${news.title}</h4>
+                            <span class="text-xs bg-gray-200 px-2 py-1 rounded text-gray-600">${news.date}</span>
+                        </div>
+                        <p class="text-sm text-gray-600">${news.text}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ================= РАСПИСАНИЕ =================
+        function updateGroups() {
+            const specSelect = document.getElementById('spec-select');
+            const groupSelect = document.getElementById('group-select');
+            const selectedSpec = specSelect.value;
+
+            groupSelect.innerHTML = '<option value="">-- Выберите группу --</option>';
+            
+            if (selectedSpec && specialties[selectedSpec]) {
+                groupSelect.disabled = false;
+                specialties[selectedSpec].forEach(group => {
+                    const option = document.createElement('option');
+                    option.value = group;
+                    option.textContent = group;
+                    groupSelect.appendChild(option);
+                });
+            } else {
+                groupSelect.disabled = true;
+                groupSelect.innerHTML = '<option value="">-- Сначала выберите специальность --</option>';
+            }
+            
+            document.getElementById('schedule-container').classList.add('hidden');
+            document.getElementById('schedule-empty').classList.remove('hidden');
+        }
+
+        function renderSchedule() {
+            const group = document.getElementById('group-select').value;
+            const container = document.getElementById('schedule-container');
+            const empty = document.getElementById('schedule-empty');
+            const tbody = document.getElementById('schedule-body');
+            const title = document.getElementById('schedule-title');
+
+            if (!group) {
+                container.classList.add('hidden');
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            title.textContent = `Расписание группы ${group}`;
+            empty.classList.add('hidden');
+            container.classList.remove('hidden');
+
+            const lessons = scheduleData[group] || [
+                { time: '09:00 - 10:30', subject: 'Общепрофессиональные дисциплины', teacher: 'Преподаватель', room: 'Уточняется', type: 'Лекция' },
+                { time: '10:45 - 12:15', subject: 'Физическая культура', teacher: 'Иванов И.И.', room: 'Спортзал', type: 'Практика' }
+            ];
+
+            tbody.innerHTML = lessons.map((lesson, index) => `
+                <tr class="schedule-row border-b hover:bg-blue-50 transition">
+                    <td class="p-4 text-gray-500">${index + 1}</td>
+                    <td class="p-4 font-mono text-sm">${lesson.time}</td>
+                    <td class="p-4 font-bold text-primary">${lesson.subject}</td>
+                    <td class="p-4">${lesson.teacher}</td>
+                    <td class="p-4"><span class="bg-gray-200 px-2 py-1 rounded text-sm">${lesson.room}</span></td>
+                    <td class="p-4">
+                        <span class="text-xs px-2 py-1 rounded ${getTypeColor(lesson.type)}">${lesson.type}</span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getTypeColor(type) {
+            switch(type) {
+                case 'Лекция': return 'bg-blue-100 text-blue-800';
+                case 'Практика': return 'bg-green-100 text-green-800';
+                case 'Семинар': return 'bg-yellow-100 text-yellow-800';
+                case 'Лабораторная': return 'bg-purple-100 text-purple-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        function downloadSchedule() {
+            showToast('Расписание скачивается в формате PDF...', 'info');
+        }
+
+        // ================= АВТОРИЗАЦИЯ =================
+        function toggleLoginModal() {
+            if (currentUser) {
+                showSection('cabinet');
+                return;
+            }
+            const modal = document.getElementById('login-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('login-username').value.toLowerCase();
+            const password = document.getElementById('login-password').value;
+
+            if (password !== '123') {
+                showToast('Неверный пароль', 'error');
+                return;
+            }
+
+            // Ролевая модель
+            const users = {
+                'student': { name: 'Федоров Дмитрий', role: 'Студент', group: 'гр. П-422', icon: 'fa-user-graduate' },
+                'teacher': { name: 'Петров Алексей', role: 'Преподаватель', group: 'Кафедра ИТ', icon: 'fa-chalkboard-teacher' },
+                'applicant': { name: 'Сидоров Иван', role: 'Абитуриент', group: 'Заявка №1234', icon: 'fa-user' }
+            };
+
+            if (users[username]) {
+                currentUser = { username, ...users[username] };
+                updateAuthUI();
+                updateCabinet();
+                toggleLoginModal();
+                showSection('cabinet');
+                showToast(`Добро пожаловать, ${currentUser.name}!`, 'success');
+            } else {
+                showToast('Пользователь не найден', 'error');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            updateAuthUI();
+            showSection('home');
+            showToast('Вы вышли из системы', 'info');
+        }
+
+        function updateAuthUI() {
+            const authSection = document.getElementById('auth-section');
+            if (currentUser) {
+                authSection.innerHTML = `
+                    <button onclick="showSection('cabinet')" class="flex items-center space-x-2 bg-white/10 px-4 py-2 rounded hover:bg-white/20 transition">
+                        <i class="fas fa-user-circle"></i>
+                        <span class="hidden md:inline">${currentUser.name}</span>
+                    </button>
+                `;
+            } else {
+                authSection.innerHTML = `
+                    <button onclick="toggleLoginModal()" class="bg-secondary text-primary font-bold px-5 py-2 rounded hover:bg-yellow-400 transition focus-visible:focus shadow-md">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Войти
+                    </button>
+                `;
+            }
+        }
+
+        function updateCabinet() {
+            if (!currentUser) return;
+            
+            document.getElementById('user-name').textContent = currentUser.name;
+            document.getElementById('user-role').textContent = currentUser.role;
+            document.getElementById('user-group').textContent = currentUser.group;
+            document.getElementById('user-avatar-icon').className = `fas ${currentUser.icon}`;
+
+            // Уведомления
+            const notifContainer = document.getElementById('cabinet-notifications');
+            notifContainer.innerHTML = notifications.map(notif => `
+                <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded hover:bg-gray-100 transition">
+                    <div class="w-2 h-2 rounded-full mt-2 ${notif.type === 'success' ? 'bg-green-500' : notif.type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'}"></div>
+                    <div>
+                        <p class="text-sm">${notif.text}</p>
+                        <p class="text-xs text-gray-500">${notif.time}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            // Расписание в кабинете
+            const cabScheduleBody = document.getElementById('cabinet-schedule-body');
+            const group = currentUser.group.includes('П-422') ? 'П-422' : 'Т-422';
+            const lessons = scheduleData[group] || scheduleData['П-422'];
+            
+            cabScheduleBody.innerHTML = lessons.map(lesson => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3 font-mono text-sm">${lesson.time}</td>
+                    <td class="p-3 font-bold">${lesson.subject}</td>
+                    <td class="p-3">${lesson.teacher}</td>
+                    <td class="p-3">${lesson.room}</td>
+                </tr>
+            `).join('');
+        }
+
+        // ================= ПРИЕМНАЯ КОМИССИЯ =================
+        function handleAdmission(event) {
+            event.preventDefault();
+            showToast('Заявка успешно отправлена! Номер: №' + Math.floor(Math.random() * 10000), 'success');
+            document.getElementById('admission-form').reset();
+        }
+
+        // ================= УВЕДОМЛЕНИЯ =================
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast toast-${type} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
